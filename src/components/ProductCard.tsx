@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export interface Product {
   id: number;
@@ -28,7 +29,7 @@ const ProductCard = ({ product, onAddToCart, index }: ProductCardProps) => {
       style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}
     >
       {/* Image Container */}
-      <div className="relative aspect-square overflow-hidden">
+      <Link to={`/product/${product.id}`} className="block relative aspect-square overflow-hidden">
         <img 
           src={product.image} 
           alt={product.name}
@@ -52,16 +53,19 @@ const ProductCard = ({ product, onAddToCart, index }: ProductCardProps) => {
 
         {/* Quick Add Button */}
         <button 
-          onClick={() => onAddToCart(product)}
+          onClick={(e) => {
+            e.preventDefault();
+            onAddToCart(product);
+          }}
           className="absolute bottom-3 right-3 w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-110 active:scale-95"
           aria-label="Add to cart"
         >
           <Plus className="w-5 h-5" />
         </button>
-      </div>
+      </Link>
 
       {/* Info */}
-      <div className="p-4">
+      <Link to={`/product/${product.id}`} className="block p-4">
         <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
           {product.category}
         </p>
@@ -76,7 +80,7 @@ const ProductCard = ({ product, onAddToCart, index }: ProductCardProps) => {
             </span>
           )}
         </div>
-      </div>
+      </Link>
     </div>
   );
 };
