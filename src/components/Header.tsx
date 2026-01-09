@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Menu, X, ShoppingBag, Search } from "lucide-react";
 
 interface HeaderProps {
@@ -8,13 +9,22 @@ interface HeaderProps {
 
 const Header = ({ cartCount, onCartClick }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogoDoubleClick = () => {
+    navigate('/admin/login');
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <a href="/" className="text-xl font-bold tracking-tight">
+          {/* Logo - Double click to access admin */}
+          <a 
+            href="/" 
+            className="text-xl font-bold tracking-tight cursor-pointer"
+            onDoubleClick={handleLogoDoubleClick}
+          >
             <span className="text-gradient">NOVA</span>
           </a>
 
