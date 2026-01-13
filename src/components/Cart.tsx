@@ -1,20 +1,23 @@
 import { X, Minus, Plus, Trash2 } from "lucide-react";
-import { Product } from "./ProductCard";
-
-interface CartItem extends Product {
-  quantity: number;
-}
+import { useNavigate } from "react-router-dom";
+import { CartItem } from "@/contexts/CartContext";
 
 interface CartProps {
   isOpen: boolean;
   onClose: () => void;
   items: CartItem[];
-  onUpdateQuantity: (id: number, delta: number) => void;
-  onRemove: (id: number) => void;
+  onUpdateQuantity: (id: number | string, delta: number) => void;
+  onRemove: (id: number | string) => void;
 }
 
 const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemove }: CartProps) => {
+  const navigate = useNavigate();
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const handleCheckout = () => {
+    onClose();
+    navigate('/checkout');
+  };
 
   if (!isOpen) return null;
 
@@ -102,7 +105,10 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemove }: CartProps)
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-bold">${total.toFixed(2)}</span>
               </div>
-              <button className="btn-primary w-full text-lg animate-pulse-glow">
+              <button 
+                onClick={handleCheckout}
+                className="btn-primary w-full text-lg animate-pulse-glow"
+              >
                 Checkout
               </button>
               <p className="text-center text-xs text-muted-foreground">

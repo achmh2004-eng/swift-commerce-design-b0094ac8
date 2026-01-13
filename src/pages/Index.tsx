@@ -1,4 +1,3 @@
-import { useState, useCallback } from "react";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import ProductGrid from "@/components/ProductGrid";
@@ -6,7 +5,7 @@ import Categories from "@/components/Categories";
 import Cart from "@/components/Cart";
 import Footer from "@/components/Footer";
 import { Product } from "@/components/ProductCard";
-import { toast } from "sonner";
+import { useCart } from "@/contexts/CartContext";
 
 import product1 from "@/assets/product-1.jpg";
 import product2 from "@/assets/product-2.jpg";
@@ -83,47 +82,8 @@ const sampleProducts: Product[] = [
   },
 ];
 
-interface CartItem extends Product {
-  quantity: number;
-}
-
 const Index = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-
-  const addToCart = useCallback((product: Product) => {
-    setCartItems((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prev, { ...product, quantity: 1 }];
-    });
-    toast.success(`${product.name} added to cart`);
-  }, []);
-
-  const updateQuantity = useCallback((id: number, delta: number) => {
-    setCartItems((prev) =>
-      prev
-        .map((item) =>
-          item.id === id
-            ? { ...item, quantity: Math.max(0, item.quantity + delta) }
-            : item
-        )
-        .filter((item) => item.quantity > 0)
-    );
-  }, []);
-
-  const removeItem = useCallback((id: number) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
-    toast.success("Item removed from cart");
-  }, []);
-
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const { items, addToCart, updateQuantity, removeItem, cartCount, isCartOpen, setIsCartOpen } = useCart();
 
   return (
     <div className="min-h-screen bg-background">
@@ -131,13 +91,13 @@ const Index = () => {
       <main>
         <Hero />
         <Categories />
-        <ProductGrid products={sampleProducts} onAddToCart={addToCart} />
+        <ProductGrid products={sampleProducts} onAddToCart={(product) => addToCart(product)} />
       </main>
       <Footer />
       <Cart
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        items={cartItems}
+        items={items}
         onUpdateQuantity={updateQuantity}
         onRemove={removeItem}
       />
