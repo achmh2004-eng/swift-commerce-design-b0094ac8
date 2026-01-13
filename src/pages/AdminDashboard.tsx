@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Loader2, Plus, Pencil, Trash2, LogOut, Package, ArrowLeft } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, LogOut, Package, ArrowLeft, ShoppingCart } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -194,6 +194,10 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin/orders')}>
+              <ShoppingCart className="w-4 h-4 ml-2" />
+              الطلبات
+            </Button>
             <span className="text-sm text-muted-foreground">{user?.email}</span>
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="w-4 h-4 ml-2" />

@@ -4,7 +4,7 @@ import { ArrowLeft, Heart, Share2, Star, Minus, Plus, Truck, RotateCcw, Shield, 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Cart from "@/components/Cart";
-import { Product } from "@/components/ProductCard";
+import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 
 import product1 from "@/assets/product-1.jpg";
@@ -14,12 +14,22 @@ import product2 from "@/assets/product-2.jpg";
 import product3 from "@/assets/product-3.jpg";
 import product4 from "@/assets/product-4.jpg";
 
-const productData: Record<string, Product & { 
-  images: string[]; 
-  sizes: string[]; 
+interface ProductData {
+  id: number;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  image: string;
+  images: string[];
+  category: string;
+  isNew?: boolean;
+  isSale?: boolean;
+  sizes: string[];
   description: string;
   features: string[];
-}> = {
+}
+
+const productData: Record<string, ProductData> = {
   "1": {
     id: 1,
     name: "Classic White Sneakers",
@@ -79,20 +89,16 @@ const reviews = [
   { id: 3, name: "Mike T.", rating: 5, date: "2 weeks ago", comment: "Best purchase I've made this year. Worth every penny.", avatar: "M" },
 ];
 
-interface CartItem extends Product {
-  quantity: number;
-}
-
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const product = productData[id || "1"];
   
+  const { items, addToCart, updateQuantity, removeItem, cartCount, isCartOpen, setIsCartOpen } = useCart();
+  
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   if (!product) {
@@ -103,44 +109,23 @@ const ProductDetail = () => {
     );
   }
 
-  const addToCart = () => {
+  const handleAddToCart = () => {
     if (!selectedSize && product.sizes.length > 1) {
       toast.error("Please select a size");
       return;
     }
     
-    setCartItems((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      }
-      return [...prev, { ...product, quantity }];
-    });
-    toast.success(`${product.name} added to cart`);
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      category: product.category,
+      originalPrice: product.originalPrice,
+      size: selectedSize || product.sizes[0],
+    }, quantity);
   };
 
-  const updateQuantity = (id: number, delta: number) => {
-    setCartItems((prev) =>
-      prev
-        .map((item) =>
-          item.id === id
-            ? { ...item, quantity: Math.max(0, item.quantity + delta) }
-            : item
-        )
-        .filter((item) => item.quantity > 0)
-    );
-  };
-
-  const removeItem = (id: number) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
-    toast.success("Item removed from cart");
-  };
-
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const discount = product.originalPrice 
     ? Math.round((1 - product.price / product.originalPrice) * 100) 
     : 0;
@@ -311,7 +296,7 @@ const ProductDetail = () => {
               {/* Actions */}
               <div className="flex gap-3">
                 <button 
-                  onClick={addToCart}
+                  onClick={handleAddToCart}
                   className="btn-primary flex-1 text-lg"
                 >
                   Add to Cart
@@ -426,7 +411,7 @@ const ProductDetail = () => {
       <Cart
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        items={cartItems}
+        items={items}
         onUpdateQuantity={updateQuantity}
         onRemove={removeItem}
       />
