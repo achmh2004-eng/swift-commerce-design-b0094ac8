@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ShoppingBag, Loader2, CheckCircle } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Loader2, CheckCircle, CreditCard, Wallet } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -17,6 +18,7 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "stripe">("cod");
   
   const [formData, setFormData] = useState({
     name: "",
@@ -33,11 +35,22 @@ const Checkout = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleStripePayment = async () => {
+    // Stripe integration placeholder - will be enabled when Stripe is connected
+    toast.error("Stripe payment is not configured yet. Please use Cash on Delivery.");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (items.length === 0) {
       toast.error("Your cart is empty");
+      return;
+    }
+
+    // Handle Stripe payment
+    if (paymentMethod === "stripe") {
+      handleStripePayment();
       return;
     }
 
@@ -257,6 +270,40 @@ const Checkout = () => {
                       placeholder="Special delivery instructions..."
                       rows={3}
                     />
+                  </div>
+
+                  {/* Payment Method Selection */}
+                  <div className="space-y-3 pt-4 border-t border-border">
+                    <Label className="text-base font-semibold">Payment Method</Label>
+                    <RadioGroup
+                      value={paymentMethod}
+                      onValueChange={(value) => setPaymentMethod(value as "cod" | "stripe")}
+                      className="space-y-3"
+                    >
+                      <div className="flex items-center space-x-3 p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                        <RadioGroupItem value="cod" id="cod" />
+                        <Label htmlFor="cod" className="flex items-center gap-3 cursor-pointer flex-1">
+                          <Wallet className="w-5 h-5 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">Cash on Delivery</p>
+                            <p className="text-sm text-muted-foreground">Pay when you receive your order</p>
+                          </div>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-3 p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer relative">
+                        <RadioGroupItem value="stripe" id="stripe" />
+                        <Label htmlFor="stripe" className="flex items-center gap-3 cursor-pointer flex-1">
+                          <CreditCard className="w-5 h-5 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">Credit/Debit Card</p>
+                            <p className="text-sm text-muted-foreground">Secure payment via Stripe</p>
+                          </div>
+                        </Label>
+                        <span className="absolute top-2 right-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                          Coming Soon
+                        </span>
+                      </div>
+                    </RadioGroup>
                   </div>
 
                   <Button 
