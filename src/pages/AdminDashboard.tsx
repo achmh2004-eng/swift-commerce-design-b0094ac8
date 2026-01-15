@@ -2,46 +2,54 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Loader2, Plus, Pencil, Trash2, LogOut, Package, ArrowLeft, ShoppingCart } from 'lucide-react';
+import { 
+  Loader2, 
+  DollarSign, 
+  ShoppingCart, 
+  Package, 
+  Users,
+  TrendingUp,
+  ArrowUpLeft
+} from 'lucide-react';
+
+import AdminSidebar from '@/components/admin/AdminSidebar';
+import AdminHeader from '@/components/admin/AdminHeader';
+import StatsCard from '@/components/admin/StatsCard';
+import SalesChart from '@/components/admin/SalesChart';
+import RecentOrders from '@/components/admin/RecentOrders';
+import TopProducts from '@/components/admin/TopProducts';
+import { Button } from '@/components/ui/button';
 
 interface Product {
   id: string;
   name: string;
   price: number;
-  original_price: number | null;
-  description: string | null;
   image_url: string | null;
-  category: string | null;
-  is_new: boolean;
-  is_on_sale: boolean;
   stock: number;
+  category: string | null;
+}
+
+interface Order {
+  id: string;
+  customer_name: string;
+  total_amount: number;
+  status: string;
+  created_at: string;
+  city: string;
 }
 
 const AdminDashboard = () => {
   const { user, isAdmin, isLoading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
-  const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    price: '',
-    original_price: '',
-    description: '',
-    image_url: '',
-    category: '',
-    is_new: false,
-    is_on_sale: false,
-    stock: '0'
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    totalOrders: 0,
+    totalProducts: 0,
+    pendingOrders: 0,
   });
 
   useEffect(() => {
@@ -52,118 +60,41 @@ const AdminDashboard = () => {
         toast.error('ليس لديك صلاحية الوصول');
         navigate('/');
       } else {
-        fetchProducts();
+        fetchData();
       }
     }
   }, [user, isAdmin, authLoading, navigate]);
 
-  const fetchProducts = async () => {
-    const { data, error } = await supabase
+  const fetchData = async () => {
+    setIsLoading(true);
+    
+    // Fetch products
+    const { data: productsData } = await supabase
       .from('products')
       .select('*')
       .order('created_at', { ascending: false });
-
-    if (error) {
-      toast.error('خطأ في جلب المنتجات');
-      console.error(error);
-    } else {
-      setProducts(data || []);
-    }
-    setIsLoading(false);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
     
-    const productData = {
-      name: formData.name,
-      price: parseFloat(formData.price),
-      original_price: formData.original_price ? parseFloat(formData.original_price) : null,
-      description: formData.description || null,
-      image_url: formData.image_url || null,
-      category: formData.category || null,
-      is_new: formData.is_new,
-      is_on_sale: formData.is_on_sale,
-      stock: parseInt(formData.stock) || 0
-    };
+    // Fetch orders
+    const { data: ordersData } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    if (editingProduct) {
-      const { error } = await supabase
-        .from('products')
-        .update(productData)
-        .eq('id', editingProduct.id);
+    setProducts(productsData || []);
+    setOrders(ordersData || []);
 
-      if (error) {
-        toast.error('خطأ في تحديث المنتج');
-        console.error(error);
-      } else {
-        toast.success('تم تحديث المنتج بنجاح');
-        fetchProducts();
-      }
-    } else {
-      const { error } = await supabase
-        .from('products')
-        .insert([productData]);
+    // Calculate stats
+    const totalRevenue = ordersData?.reduce((sum, order) => sum + order.total_amount, 0) || 0;
+    const pendingOrders = ordersData?.filter(order => order.status === 'pending').length || 0;
 
-      if (error) {
-        toast.error('خطأ في إضافة المنتج');
-        console.error(error);
-      } else {
-        toast.success('تم إضافة المنتج بنجاح');
-        fetchProducts();
-      }
-    }
-
-    resetForm();
-    setIsDialogOpen(false);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا المنتج؟')) return;
-
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      toast.error('خطأ في حذف المنتج');
-      console.error(error);
-    } else {
-      toast.success('تم حذف المنتج');
-      fetchProducts();
-    }
-  };
-
-  const handleEdit = (product: Product) => {
-    setEditingProduct(product);
-    setFormData({
-      name: product.name,
-      price: product.price.toString(),
-      original_price: product.original_price?.toString() || '',
-      description: product.description || '',
-      image_url: product.image_url || '',
-      category: product.category || '',
-      is_new: product.is_new,
-      is_on_sale: product.is_on_sale,
-      stock: product.stock.toString()
+    setStats({
+      totalRevenue,
+      totalOrders: ordersData?.length || 0,
+      totalProducts: productsData?.length || 0,
+      pendingOrders,
     });
-    setIsDialogOpen(true);
-  };
 
-  const resetForm = () => {
-    setEditingProduct(null);
-    setFormData({
-      name: '',
-      price: '',
-      original_price: '',
-      description: '',
-      image_url: '',
-      category: '',
-      is_new: false,
-      is_on_sale: false,
-      stock: '0'
-    });
+    setIsLoading(false);
   };
 
   const handleLogout = async () => {
@@ -171,207 +102,104 @@ const AdminDashboard = () => {
     navigate('/');
   };
 
+  // Generate chart data (last 7 days simulation)
+  const chartData = [
+    { name: 'السبت', sales: 1200, orders: 12 },
+    { name: 'الأحد', sales: 1900, orders: 19 },
+    { name: 'الإثنين', sales: 800, orders: 8 },
+    { name: 'الثلاثاء', sales: 1500, orders: 15 },
+    { name: 'الأربعاء', sales: 2100, orders: 21 },
+    { name: 'الخميس', sales: 1800, orders: 18 },
+    { name: 'الجمعة', sales: 2400, orders: 24 },
+  ];
+
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">جاري التحميل...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="flex items-center gap-2">
-              <Package className="w-6 h-6 text-primary" />
-              <h1 className="text-xl font-bold">لوحة التحكم</h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm" onClick={() => navigate('/admin/orders')}>
-              <ShoppingCart className="w-4 h-4 ml-2" />
-              الطلبات
-            </Button>
-            <span className="text-sm text-muted-foreground">{user?.email}</span>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 ml-2" />
-              تسجيل الخروج
-            </Button>
-          </div>
-        </div>
-      </header>
+      {/* Sidebar */}
+      <AdminSidebar onLogout={handleLogout} />
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>إدارة المنتجات</CardTitle>
-              <CardDescription>إضافة، تعديل، وحذف المنتجات</CardDescription>
+      <div className="mr-64 min-h-screen">
+        <AdminHeader 
+          email={user?.email} 
+          title="مرحباً بك! 👋" 
+          subtitle="إليك نظرة عامة على أداء متجرك اليوم"
+        />
+
+        <main className="p-8 space-y-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatsCard
+              title="إجمالي الإيرادات"
+              value={`$${stats.totalRevenue.toFixed(2)}`}
+              change="+12.5% من الشهر الماضي"
+              changeType="positive"
+              icon={DollarSign}
+            />
+            <StatsCard
+              title="إجمالي الطلبات"
+              value={stats.totalOrders}
+              change="+8.2% من الشهر الماضي"
+              changeType="positive"
+              icon={ShoppingCart}
+            />
+            <StatsCard
+              title="المنتجات"
+              value={stats.totalProducts}
+              change="مخزون نشط"
+              changeType="neutral"
+              icon={Package}
+            />
+            <StatsCard
+              title="طلبات معلقة"
+              value={stats.pendingOrders}
+              change="تحتاج للمراجعة"
+              changeType={stats.pendingOrders > 0 ? "negative" : "positive"}
+              icon={TrendingUp}
+            />
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex flex-wrap gap-4">
+            <Button onClick={() => navigate('/admin/products')} className="gap-2">
+              <Package className="w-4 h-4" />
+              إدارة المنتجات
+            </Button>
+            <Button onClick={() => navigate('/admin/orders')} variant="secondary" className="gap-2">
+              <ShoppingCart className="w-4 h-4" />
+              عرض الطلبات
+            </Button>
+            <Button onClick={() => navigate('/')} variant="outline" className="gap-2">
+              <ArrowUpLeft className="w-4 h-4" />
+              زيارة المتجر
+            </Button>
+          </div>
+
+          {/* Charts & Tables */}
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <SalesChart data={chartData} />
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={(open) => {
-              setIsDialogOpen(open);
-              if (!open) resetForm();
-            }}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 ml-2" />
-                  إضافة منتج
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md" dir="rtl">
-                <DialogHeader>
-                  <DialogTitle>{editingProduct ? 'تعديل المنتج' : 'إضافة منتج جديد'}</DialogTitle>
-                  <DialogDescription>أدخل بيانات المنتج</DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">اسم المنتج</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="price">السعر</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        step="0.01"
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="original_price">السعر الأصلي</Label>
-                      <Input
-                        id="original_price"
-                        type="number"
-                        step="0.01"
-                        value={formData.original_price}
-                        onChange={(e) => setFormData({ ...formData, original_price: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="category">الفئة</Label>
-                    <Input
-                      id="category"
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="image_url">رابط الصورة</Label>
-                    <Input
-                      id="image_url"
-                      value={formData.image_url}
-                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="stock">الكمية</Label>
-                    <Input
-                      id="stock"
-                      type="number"
-                      value={formData.stock}
-                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id="is_new"
-                        checked={formData.is_new}
-                        onCheckedChange={(checked) => setFormData({ ...formData, is_new: checked })}
-                      />
-                      <Label htmlFor="is_new">جديد</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id="is_on_sale"
-                        checked={formData.is_on_sale}
-                        onCheckedChange={(checked) => setFormData({ ...formData, is_on_sale: checked })}
-                      />
-                      <Label htmlFor="is_on_sale">تخفيض</Label>
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full">
-                    {editingProduct ? 'تحديث' : 'إضافة'}
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </CardHeader>
-          <CardContent>
-            {products.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                لا توجد منتجات بعد. أضف منتجك الأول!
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>المنتج</TableHead>
-                    <TableHead>السعر</TableHead>
-                    <TableHead>الفئة</TableHead>
-                    <TableHead>الكمية</TableHead>
-                    <TableHead>الحالة</TableHead>
-                    <TableHead>إجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {products.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>
-                        ${product.price}
-                        {product.original_price && (
-                          <span className="text-muted-foreground line-through mr-2">
-                            ${product.original_price}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>{product.category || '-'}</TableCell>
-                      <TableCell>{product.stock}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {product.is_new && (
-                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">جديد</span>
-                          )}
-                          {product.is_on_sale && (
-                            <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">تخفيض</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)}>
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+            <div>
+              <TopProducts products={products} />
+            </div>
+          </div>
+
+          {/* Recent Orders */}
+          <RecentOrders orders={orders.slice(0, 5)} />
+        </main>
+      </div>
     </div>
   );
 };
