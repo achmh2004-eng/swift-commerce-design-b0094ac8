@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, X, ShoppingBag, Search } from "lucide-react";
 import logo from "@/assets/logo.png";
@@ -11,9 +11,25 @@ interface HeaderProps {
 const Header = ({ cartCount, onCartClick }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const clickCountRef = useRef(0);
+  const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleLogoDoubleClick = () => {
-    navigate('/admin/login');
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    clickCountRef.current += 1;
+
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+    }
+
+    clickTimerRef.current = setTimeout(() => {
+      if (clickCountRef.current >= 2) {
+        navigate('/admin/login');
+      } else {
+        navigate('/');
+      }
+      clickCountRef.current = 0;
+    }, 300);
   };
 
   return (
@@ -21,16 +37,15 @@ const Header = ({ cartCount, onCartClick }: HeaderProps) => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo - Double click to access admin */}
-          <a 
-            href="/" 
+          <button 
+            onClick={handleLogoClick}
             className="flex items-center gap-2 cursor-pointer"
-            onDoubleClick={handleLogoDoubleClick}
           >
             <div className="w-10 h-10 rounded-lg overflow-hidden bg-foreground flex items-center justify-center">
               <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
             </div>
             <span className="text-xl font-bold tracking-tight text-gradient hidden sm:inline">NOVA</span>
-          </a>
+          </button>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8">
