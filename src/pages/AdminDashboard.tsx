@@ -8,7 +8,6 @@ import {
   DollarSign, 
   ShoppingCart, 
   Package, 
-  Users,
   TrendingUp,
   ArrowUpLeft
 } from 'lucide-react';
@@ -130,16 +129,16 @@ const AdminDashboard = () => {
       <AdminSidebar onLogout={handleLogout} />
 
       {/* Main Content */}
-      <div className="mr-64 min-h-screen">
+      <div className="lg:mr-64 min-h-screen">
         <AdminHeader 
           email={user?.email} 
           title="مرحباً بك! 👋" 
           subtitle="إليك نظرة عامة على أداء متجرك اليوم"
         />
 
-        <main className="p-8 space-y-8">
+        <main className="p-4 lg:p-8 space-y-6 lg:space-y-8">
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
             <StatsCard
               title="إجمالي الإيرادات"
               value={`$${stats.totalRevenue.toFixed(2)}`}
@@ -171,23 +170,23 @@ const AdminDashboard = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="flex flex-wrap gap-4">
-            <Button onClick={() => navigate('/admin/products')} className="gap-2">
+          <div className="flex flex-wrap gap-2 lg:gap-4">
+            <Button onClick={() => navigate('/admin/products')} className="gap-2 text-sm lg:text-base">
               <Package className="w-4 h-4" />
-              إدارة المنتجات
+              <span className="hidden sm:inline">إدارة</span> المنتجات
             </Button>
-            <Button onClick={() => navigate('/admin/orders')} variant="secondary" className="gap-2">
+            <Button onClick={() => navigate('/admin/orders')} variant="secondary" className="gap-2 text-sm lg:text-base">
               <ShoppingCart className="w-4 h-4" />
-              عرض الطلبات
+              <span className="hidden sm:inline">عرض</span> الطلبات
             </Button>
-            <Button onClick={() => navigate('/')} variant="outline" className="gap-2">
+            <Button onClick={() => navigate('/')} variant="outline" className="gap-2 text-sm lg:text-base">
               <ArrowUpLeft className="w-4 h-4" />
-              زيارة المتجر
+              <span className="hidden sm:inline">زيارة</span> المتجر
             </Button>
           </div>
 
           {/* Charts & Tables */}
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
             <div className="lg:col-span-2">
               <SalesChart data={chartData} />
             </div>

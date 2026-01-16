@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, X, ShoppingBag, Search } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 interface HeaderProps {
   cartCount: number;
@@ -22,10 +23,13 @@ const Header = ({ cartCount, onCartClick }: HeaderProps) => {
           {/* Logo - Double click to access admin */}
           <a 
             href="/" 
-            className="text-xl font-bold tracking-tight cursor-pointer"
+            className="flex items-center gap-2 cursor-pointer"
             onDoubleClick={handleLogoDoubleClick}
           >
-            <span className="text-gradient">NOVA</span>
+            <div className="w-10 h-10 rounded-lg overflow-hidden bg-foreground flex items-center justify-center">
+              <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-gradient hidden sm:inline">NOVA</span>
           </a>
 
           {/* Desktop Nav */}
