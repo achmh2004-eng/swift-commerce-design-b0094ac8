@@ -159,29 +159,29 @@ const OrdersAdmin = () => {
     <div className="min-h-screen bg-background" dir="rtl">
       <AdminSidebar onLogout={handleLogout} />
 
-      <div className="mr-64 min-h-screen">
+      <div className="lg:mr-64 min-h-screen">
         <AdminHeader 
           email={user?.email} 
           title="إدارة الطلبات" 
           subtitle={`${orders.length} طلب في المتجر`}
         />
 
-        <main className="p-8">
+        <main className="p-4 lg:p-8">
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
             {/* Toolbar */}
-            <div className="p-6 border-b border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4 w-full sm:w-auto">
-                <div className="relative flex-1 sm:flex-initial">
+            <div className="p-4 lg:p-6 border-b border-border space-y-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="relative flex-1">
                   <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input 
-                    placeholder="بحث بالاسم أو البريد أو رقم الطلب..." 
+                    placeholder="بحث..." 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full sm:w-80 pr-10 bg-background"
+                    className="w-full pr-10 bg-background"
                   />
                 </div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40">
                     <SelectValue placeholder="جميع الحالات" />
                   </SelectTrigger>
                   <SelectContent>
@@ -197,93 +197,149 @@ const OrdersAdmin = () => {
               </div>
             </div>
 
-            {/* Table */}
-            {filteredOrders.length === 0 ? (
-              <div className="text-center py-16">
-                <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">لا توجد طلبات</h3>
-                <p className="text-muted-foreground">لم يتم استلام أي طلبات بعد</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead>رقم الطلب</TableHead>
-                      <TableHead>العميل</TableHead>
-                      <TableHead>المدينة</TableHead>
-                      <TableHead>المبلغ</TableHead>
-                      <TableHead>الحالة</TableHead>
-                      <TableHead>التاريخ</TableHead>
-                      <TableHead className="text-left">إجراءات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredOrders.map((order) => (
-                      <TableRow key={order.id} className="group">
-                        <TableCell>
-                          <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
+            {/* Mobile Cards View */}
+            <div className="lg:hidden">
+              {filteredOrders.length === 0 ? (
+                <div className="text-center py-16">
+                  <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">لا توجد طلبات</h3>
+                  <p className="text-muted-foreground">لم يتم استلام أي طلبات بعد</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {filteredOrders.map((order) => (
+                    <div key={order.id} className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
                             #{order.id.slice(0, 8).toUpperCase()}
                           </span>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{order.customer_name}</p>
-                            <p className="text-sm text-muted-foreground">{order.customer_email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <MapPin className="w-3 h-3" />
-                            {order.city}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="font-bold text-lg">${order.total_amount.toFixed(2)}</span>
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={order.status}
-                            onValueChange={(value) => handleStatusChange(order.id, value)}
-                          >
-                            <SelectTrigger className="w-36 border-0 bg-transparent p-0 h-auto">
-                              <Badge variant="outline" className={cn("cursor-pointer", statusConfig[order.status]?.className)}>
-                                {statusConfig[order.status]?.label || order.status}
-                              </Badge>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">قيد الانتظار</SelectItem>
-                              <SelectItem value="confirmed">مؤكد</SelectItem>
-                              <SelectItem value="processing">قيد المعالجة</SelectItem>
-                              <SelectItem value="shipped">تم الشحن</SelectItem>
-                              <SelectItem value="delivered">تم التوصيل</SelectItem>
-                              <SelectItem value="cancelled">ملغي</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Clock className="w-3 h-3" />
-                            {formatDate(order.created_at)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleViewOrder(order)}
-                            className="gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Eye className="w-4 h-4" />
-                            عرض
-                          </Button>
-                        </TableCell>
+                          <p className="font-medium mt-2">{order.customer_name}</p>
+                          <p className="text-sm text-muted-foreground">{order.customer_email}</p>
+                        </div>
+                        <Badge variant="outline" className={cn("shrink-0", statusConfig[order.status]?.className)}>
+                          {statusConfig[order.status]?.label || order.status}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <MapPin className="w-3 h-3" />
+                          {order.city}
+                        </div>
+                        <span className="font-bold text-lg">${order.total_amount.toFixed(2)}</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-2">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="w-3 h-3" />
+                          {formatDate(order.created_at)}
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleViewOrder(order)}
+                          className="gap-1"
+                        >
+                          <Eye className="w-4 h-4" />
+                          عرض
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden lg:block">
+              {filteredOrders.length === 0 ? (
+                <div className="text-center py-16">
+                  <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">لا توجد طلبات</h3>
+                  <p className="text-muted-foreground">لم يتم استلام أي طلبات بعد</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead>رقم الطلب</TableHead>
+                        <TableHead>العميل</TableHead>
+                        <TableHead>المدينة</TableHead>
+                        <TableHead>المبلغ</TableHead>
+                        <TableHead>الحالة</TableHead>
+                        <TableHead>التاريخ</TableHead>
+                        <TableHead className="text-left">إجراءات</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+                    </TableHeader>
+                    <TableBody>
+                      {filteredOrders.map((order) => (
+                        <TableRow key={order.id} className="group">
+                          <TableCell>
+                            <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
+                              #{order.id.slice(0, 8).toUpperCase()}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{order.customer_name}</p>
+                              <p className="text-sm text-muted-foreground">{order.customer_email}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <MapPin className="w-3 h-3" />
+                              {order.city}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-bold text-lg">${order.total_amount.toFixed(2)}</span>
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={order.status}
+                              onValueChange={(value) => handleStatusChange(order.id, value)}
+                            >
+                              <SelectTrigger className="w-36 border-0 bg-transparent p-0 h-auto">
+                                <Badge variant="outline" className={cn("cursor-pointer", statusConfig[order.status]?.className)}>
+                                  {statusConfig[order.status]?.label || order.status}
+                                </Badge>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">قيد الانتظار</SelectItem>
+                                <SelectItem value="confirmed">مؤكد</SelectItem>
+                                <SelectItem value="processing">قيد المعالجة</SelectItem>
+                                <SelectItem value="shipped">تم الشحن</SelectItem>
+                                <SelectItem value="delivered">تم التوصيل</SelectItem>
+                                <SelectItem value="cancelled">ملغي</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Clock className="w-3 h-3" />
+                              {formatDate(order.created_at)}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleViewOrder(order)}
+                              className="gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Eye className="w-4 h-4" />
+                              عرض
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </div>
@@ -302,7 +358,7 @@ const OrdersAdmin = () => {
           {selectedOrder && (
             <div className="space-y-6">
               {/* Status Badge */}
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <Badge variant="outline" className={cn("text-sm", statusConfig[selectedOrder.status]?.className)}>
                   {statusConfig[selectedOrder.status]?.label || selectedOrder.status}
                 </Badge>
@@ -361,17 +417,17 @@ const OrdersAdmin = () => {
                   {orderItems.map((item) => (
                     <div key={item.id} className="flex justify-between items-center p-4 bg-card border border-border rounded-xl">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                        <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center shrink-0">
                           <Package className="w-5 h-5 text-muted-foreground" />
                         </div>
-                        <div>
-                          <p className="font-medium">{item.product_name}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">{item.product_name}</p>
                           {item.size && (
                             <p className="text-sm text-muted-foreground">المقاس: {item.size}</p>
                           )}
                         </div>
                       </div>
-                      <div className="text-left">
+                      <div className="text-left shrink-0">
                         <p className="font-medium">${item.product_price.toFixed(2)} × {item.quantity}</p>
                         <p className="text-primary font-bold">
                           ${(item.product_price * item.quantity).toFixed(2)}
@@ -383,9 +439,9 @@ const OrdersAdmin = () => {
               </div>
 
               {/* Total */}
-              <div className="flex justify-between items-center p-6 bg-gradient-to-l from-primary/20 to-transparent rounded-xl border border-primary/20">
-                <span className="text-lg font-semibold">المجموع الكلي</span>
-                <span className="text-3xl font-bold text-primary">${selectedOrder.total_amount.toFixed(2)}</span>
+              <div className="flex justify-between items-center p-4 lg:p-6 bg-gradient-to-l from-primary/20 to-transparent rounded-xl border border-primary/20">
+                <span className="text-base lg:text-lg font-semibold">المجموع الكلي</span>
+                <span className="text-2xl lg:text-3xl font-bold text-primary">${selectedOrder.total_amount.toFixed(2)}</span>
               </div>
             </div>
           )}
