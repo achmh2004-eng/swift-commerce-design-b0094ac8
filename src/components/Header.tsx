@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { Menu, X, ShoppingBag, Search } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Menu, X, ShoppingBag, Search, User } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo.png";
 
 interface HeaderProps {
@@ -11,6 +12,7 @@ interface HeaderProps {
 const Header = ({ cartCount, onCartClick }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const clickCountRef = useRef(0);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -56,6 +58,9 @@ const Header = ({ cartCount, onCartClick }: HeaderProps) => {
 
           {/* Actions */}
           <div className="flex items-center gap-4">
+            <Link to={user ? "/my-orders" : "/auth"} className="p-2 nav-link hidden md:flex" title={user ? "طلباتي" : "تسجيل الدخول"}>
+              <User className="w-5 h-5" />
+            </Link>
             <button className="p-2 nav-link hidden md:flex">
               <Search className="w-5 h-5" />
             </button>
