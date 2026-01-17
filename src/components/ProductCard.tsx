@@ -2,7 +2,7 @@ import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export interface Product {
-  id: number;
+  id: number | string;
   name: string;
   price: number;
   originalPrice?: number;
@@ -73,10 +73,10 @@ const ProductCard = ({ product, onAddToCart, index }: ProductCardProps) => {
           {product.name}
         </h3>
         <div className="flex items-center gap-2">
-          <span className="font-bold text-lg">${product.price}</span>
+          <span className="font-bold text-lg">{product.price} د.ج</span>
           {product.originalPrice && (
             <span className="text-muted-foreground line-through text-sm">
-              ${product.originalPrice}
+              {product.originalPrice} د.ج
             </span>
           )}
         </div>

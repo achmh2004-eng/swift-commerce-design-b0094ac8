@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import ProductGrid from "@/components/ProductGrid";
@@ -6,84 +7,35 @@ import Cart from "@/components/Cart";
 import Footer from "@/components/Footer";
 import { Product } from "@/components/ProductCard";
 import { useCart } from "@/contexts/CartContext";
+import { useProducts } from "@/hooks/useProducts";
+import { Loader2 } from "lucide-react";
 
+// Fallback images
 import product1 from "@/assets/product-1.jpg";
 import product2 from "@/assets/product-2.jpg";
 import product3 from "@/assets/product-3.jpg";
 import product4 from "@/assets/product-4.jpg";
 
-const sampleProducts: Product[] = [
-  {
-    id: 1,
-    name: "Classic White Sneakers",
-    price: 159,
-    originalPrice: 199,
-    image: product1,
-    category: "Footwear",
-    isNew: true,
-    isSale: true,
-  },
-  {
-    id: 2,
-    name: "Leather Crossbody Bag",
-    price: 89,
-    image: product2,
-    category: "Accessories",
-    isNew: true,
-  },
-  {
-    id: 3,
-    name: "Wireless Pro Headphones",
-    price: 249,
-    originalPrice: 299,
-    image: product3,
-    category: "Tech",
-    isSale: true,
-  },
-  {
-    id: 4,
-    name: "Chronograph Watch",
-    price: 329,
-    image: product4,
-    category: "Watches",
-    isNew: true,
-  },
-  {
-    id: 5,
-    name: "Premium White Kicks",
-    price: 189,
-    image: product1,
-    category: "Footwear",
-  },
-  {
-    id: 6,
-    name: "Mini Leather Pouch",
-    price: 59,
-    originalPrice: 79,
-    image: product2,
-    category: "Accessories",
-    isSale: true,
-  },
-  {
-    id: 7,
-    name: "Studio Headphones",
-    price: 199,
-    image: product3,
-    category: "Tech",
-  },
-  {
-    id: 8,
-    name: "Sports Watch Pro",
-    price: 279,
-    originalPrice: 349,
-    image: product4,
-    category: "Watches",
-    isSale: true,
-  },
-];
+const fallbackImages = [product1, product2, product3, product4];
 
 const Index = () => {
   const { items, addToCart, updateQuantity, removeItem, cartCount, isCartOpen, setIsCartOpen } = useCart();
+  const { products: dbProducts, isLoading } = useProducts();
+
+  const products: Product[] = useMemo(() => {
+    if (dbProducts.length === 0) return [];
+    
+    return dbProducts.map((product, index) => ({
+      id: product.id,
+      name: product.name,
+      price: Number(product.price),
+      originalPrice: product.original_price ? Number(product.original_price) : undefined,
+      image: product.image_url || fallbackImages[index % fallbackImages.length],
+      category: product.category || "منتجات",
+      isNew: product.is_new || false,
+      isSale: product.is_on_sale || false,
+    }));
+  }, [dbProducts]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,7 +43,17 @@ const Index = () => {
       <main>
         <Hero />
         <Categories />
-        <ProductGrid products={sampleProducts} onAddToCart={(product) => addToCart(product)} />
+        {isLoading ? (
+          <div className="py-20 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : products.length === 0 ? (
+          <div className="py-20 text-center">
+            <p className="text-muted-foreground text-lg">لا توجد منتجات حالياً</p>
+          </div>
+        ) : (
+          <ProductGrid products={products} onAddToCart={(product) => addToCart(product)} />
+        )}
       </main>
       <Footer />
       <Cart
