@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Plus, Pencil, Trash2, Package, Search } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Package, Search, Upload, X, Image } from 'lucide-react';
 
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
@@ -37,6 +37,10 @@ const ProductsAdmin = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -75,6 +79,60 @@ const ProductsAdmin = () => {
       setProducts(data || []);
     }
     setIsLoading(false);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('يرجى اختيار صورة صالحة');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('حجم الصورة يجب أن يكون أقل من 5 ميجابايت');
+      return;
+    }
+
+    setUploading(true);
+    
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `products/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('products')
+        .getPublicUrl(filePath);
+
+      setFormData({ ...formData, image_url: publicUrl });
+      setImagePreview(publicUrl);
+      toast.success('تم رفع الصورة بنجاح');
+    } catch (error: any) {
+      console.error('Error uploading image:', error);
+      toast.error('خطأ في رفع الصورة');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = () => {
+    setFormData({ ...formData, image_url: '' });
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -153,6 +211,7 @@ const ProductsAdmin = () => {
       is_on_sale: product.is_on_sale,
       stock: product.stock.toString()
     });
+    setImagePreview(product.image_url);
     setIsDialogOpen(true);
   };
 
@@ -169,6 +228,10 @@ const ProductsAdmin = () => {
       is_on_sale: false,
       stock: '0'
     });
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleLogout = async () => {
@@ -203,7 +266,7 @@ const ProductsAdmin = () => {
           subtitle={`${products.length} منتج في المتجر`}
         />
 
-        <main className="p-4 lg:p-8">
+        <main className="p-4 lg:p-8 pt-20 lg:pt-8">
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
             {/* Toolbar */}
             <div className="p-4 lg:p-6 border-b border-border space-y-4">
@@ -234,6 +297,53 @@ const ProductsAdmin = () => {
                       <DialogDescription>أدخل بيانات المنتج</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
+                      {/* Image Upload */}
+                      <div className="space-y-2">
+                        <Label>صورة المنتج</Label>
+                        <div className="border-2 border-dashed border-border rounded-xl p-4 text-center">
+                          {imagePreview ? (
+                            <div className="relative inline-block">
+                              <img 
+                                src={imagePreview} 
+                                alt="Preview" 
+                                className="w-32 h-32 object-cover rounded-lg mx-auto"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute -top-2 -right-2 w-6 h-6"
+                                onClick={removeImage}
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div 
+                              className="cursor-pointer py-6"
+                              onClick={() => fileInputRef.current?.click()}
+                            >
+                              {uploading ? (
+                                <Loader2 className="w-10 h-10 mx-auto text-muted-foreground animate-spin" />
+                              ) : (
+                                <>
+                                  <Upload className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
+                                  <p className="text-sm text-muted-foreground">اضغط لرفع صورة</p>
+                                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG حتى 5MB</p>
+                                </>
+                              )}
+                            </div>
+                          )}
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                          />
+                        </div>
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="name">اسم المنتج *</Label>
                         <Input
@@ -246,7 +356,7 @@ const ProductsAdmin = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="price">السعر *</Label>
+                          <Label htmlFor="price">السعر (د.ج) *</Label>
                           <Input
                             id="price"
                             type="number"
@@ -254,7 +364,7 @@ const ProductsAdmin = () => {
                             value={formData.price}
                             onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                             required
-                            placeholder="0.00"
+                            placeholder="0"
                           />
                         </div>
                         <div className="space-y-2">
@@ -265,7 +375,7 @@ const ProductsAdmin = () => {
                             step="0.01"
                             value={formData.original_price}
                             onChange={(e) => setFormData({ ...formData, original_price: e.target.value })}
-                            placeholder="0.00"
+                            placeholder="0"
                           />
                         </div>
                       </div>
@@ -286,15 +396,6 @@ const ProductsAdmin = () => {
                           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                           placeholder="وصف مختصر للمنتج..."
                           rows={3}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="image_url">رابط الصورة</Label>
-                        <Input
-                          id="image_url"
-                          value={formData.image_url}
-                          onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                          placeholder="https://..."
                         />
                       </div>
                       <div className="space-y-2">
@@ -325,7 +426,7 @@ const ProductsAdmin = () => {
                           <Label htmlFor="is_on_sale">عرض تخفيض</Label>
                         </div>
                       </div>
-                      <Button type="submit" className="w-full">
+                      <Button type="submit" className="w-full" disabled={uploading}>
                         {editingProduct ? 'تحديث المنتج' : 'إضافة المنتج'}
                       </Button>
                     </form>
@@ -364,10 +465,10 @@ const ProductsAdmin = () => {
                             {product.description || 'بدون وصف'}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="font-bold text-primary">${product.price.toFixed(2)}</span>
+                            <span className="font-bold text-primary">{product.price.toLocaleString()} د.ج</span>
                             {product.original_price && (
                               <span className="text-sm text-muted-foreground line-through">
-                                ${product.original_price.toFixed(2)}
+                                {product.original_price.toLocaleString()} د.ج
                               </span>
                             )}
                           </div>
@@ -426,18 +527,18 @@ const ProductsAdmin = () => {
                     </TableHeader>
                     <TableBody>
                       {filteredProducts.map((product) => (
-                        <TableRow key={product.id} className="group">
+                        <TableRow key={product.id}>
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-xl overflow-hidden bg-muted flex items-center justify-center">
+                              <div className="w-12 h-12 rounded-xl overflow-hidden bg-muted flex items-center justify-center shrink-0">
                                 {product.image_url ? (
                                   <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
                                 ) : (
-                                  <Package className="w-5 h-5 text-muted-foreground" />
+                                  <Image className="w-5 h-5 text-muted-foreground" />
                                 )}
                               </div>
-                              <div>
-                                <p className="font-medium">{product.name}</p>
+                              <div className="min-w-0">
+                                <p className="font-medium truncate max-w-[200px]">{product.name}</p>
                                 <p className="text-sm text-muted-foreground truncate max-w-[200px]">
                                   {product.description || 'بدون وصف'}
                                 </p>
@@ -445,11 +546,11 @@ const ProductsAdmin = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div>
-                              <p className="font-bold text-primary">${product.price.toFixed(2)}</p>
+                            <div className="space-y-1">
+                              <p className="font-bold text-primary">{product.price.toLocaleString()} د.ج</p>
                               {product.original_price && (
                                 <p className="text-sm text-muted-foreground line-through">
-                                  ${product.original_price.toFixed(2)}
+                                  {product.original_price.toLocaleString()} د.ج
                                 </p>
                               )}
                             </div>
@@ -458,26 +559,34 @@ const ProductsAdmin = () => {
                             <Badge variant="secondary">{product.category || 'بدون فئة'}</Badge>
                           </TableCell>
                           <TableCell>
-                            <span className={product.stock <= 5 ? 'text-red-500 font-medium' : ''}>
+                            <Badge variant={product.stock > 0 ? "default" : "destructive"}>
                               {product.stock}
-                            </span>
+                            </Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-1">
+                            <div className="flex flex-wrap gap-1">
                               {product.is_new && (
                                 <Badge className="bg-green-500/10 text-green-500 border-green-500/20">جديد</Badge>
                               )}
                               {product.is_on_sale && (
                                 <Badge className="bg-red-500/10 text-red-500 border-red-500/20">تخفيض</Badge>
                               )}
+                              {!product.is_new && !product.is_on_sale && (
+                                <span className="text-muted-foreground text-sm">-</span>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex items-center gap-1">
                               <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
                                 <Pencil className="w-4 h-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)} className="text-destructive hover:text-destructive">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => handleDelete(product.id)}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>

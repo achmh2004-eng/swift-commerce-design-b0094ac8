@@ -140,7 +140,7 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header cartCount={cartCount} onCartClick={() => setIsCartOpen(true)} />
+      <Header />
       
       <main className="pt-20 pb-16">
         <div className="container mx-auto px-4">

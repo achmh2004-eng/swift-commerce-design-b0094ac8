@@ -2,17 +2,14 @@ import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Menu, X, ShoppingBag, Search, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useCart } from "@/contexts/CartContext";
 import logo from "@/assets/logo.png";
 
-interface HeaderProps {
-  cartCount: number;
-  onCartClick: () => void;
-}
-
-const Header = ({ cartCount, onCartClick }: HeaderProps) => {
+const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { cartCount, setIsCartOpen } = useCart();
   const clickCountRef = useRef(0);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -51,9 +48,9 @@ const Header = ({ cartCount, onCartClick }: HeaderProps) => {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#new" className="nav-link">New</a>
-            <a href="#shop" className="nav-link">Shop</a>
-            <a href="#collections" className="nav-link">Collections</a>
+            <Link to="/" className="nav-link">الرئيسية</Link>
+            <Link to="/products" className="nav-link">المنتجات</Link>
+            <a href="#collections" className="nav-link">التصنيفات</a>
           </nav>
 
           {/* Actions */}
@@ -66,7 +63,7 @@ const Header = ({ cartCount, onCartClick }: HeaderProps) => {
             </button>
             
             <button 
-              onClick={onCartClick}
+              onClick={() => setIsCartOpen(true)}
               className="relative p-2 nav-link"
             >
               <ShoppingBag className="w-5 h-5" />
@@ -91,15 +88,18 @@ const Header = ({ cartCount, onCartClick }: HeaderProps) => {
       {isMenuOpen && (
         <div className="md:hidden absolute top-16 left-0 right-0 bg-background border-b border-border animate-slide-up">
           <nav className="container mx-auto px-4 py-6 flex flex-col gap-4">
-            <a href="#new" className="nav-link text-lg py-2" onClick={() => setIsMenuOpen(false)}>New Arrivals</a>
-            <a href="#shop" className="nav-link text-lg py-2" onClick={() => setIsMenuOpen(false)}>Shop All</a>
-            <a href="#collections" className="nav-link text-lg py-2" onClick={() => setIsMenuOpen(false)}>Collections</a>
+            <Link to="/" className="nav-link text-lg py-2" onClick={() => setIsMenuOpen(false)}>الرئيسية</Link>
+            <Link to="/products" className="nav-link text-lg py-2" onClick={() => setIsMenuOpen(false)}>المنتجات</Link>
+            <a href="#collections" className="nav-link text-lg py-2" onClick={() => setIsMenuOpen(false)}>التصنيفات</a>
+            <Link to={user ? "/my-orders" : "/auth"} className="nav-link text-lg py-2" onClick={() => setIsMenuOpen(false)}>
+              {user ? "طلباتي" : "تسجيل الدخول"}
+            </Link>
             <div className="pt-4 border-t border-border">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input 
                   type="text" 
-                  placeholder="Search products..." 
+                  placeholder="البحث عن منتجات..." 
                   className="input-search w-full pl-12"
                 />
               </div>
