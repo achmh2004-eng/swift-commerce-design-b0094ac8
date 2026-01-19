@@ -131,7 +131,6 @@ const AdminDashboard = () => {
       {/* Main Content */}
       <div className="lg:mr-64 min-h-screen">
         <AdminHeader 
-          email={user?.email} 
           title="مرحباً بك! 👋" 
           subtitle="إليك نظرة عامة على أداء متجرك اليوم"
         />

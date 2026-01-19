@@ -161,7 +161,6 @@ const OrdersAdmin = () => {
 
       <div className="lg:mr-64 min-h-screen">
         <AdminHeader 
-          email={user?.email} 
           title="إدارة الطلبات" 
           subtitle={`${orders.length} طلب في المتجر`}
         />

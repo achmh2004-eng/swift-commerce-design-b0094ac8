@@ -20,7 +20,7 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"cod" | "stripe">("cod");
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "baridimob">("cod");
   const [selectedWilaya, setSelectedWilaya] = useState<string>("");
   const [selectedCommune, setSelectedCommune] = useState<string>("");
   
@@ -52,9 +52,7 @@ const Checkout = () => {
     setSelectedCommune("");
   };
 
-  const handleStripePayment = async () => {
-    toast.error("الدفع عبر البطاقة غير متاح حالياً. يرجى استخدام الدفع عند الاستلام.");
-  };
+  const BARIDIMOB_ACCOUNT = "00799999004127558756";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,10 +67,6 @@ const Checkout = () => {
       return;
     }
 
-    if (paymentMethod === "stripe") {
-      handleStripePayment();
-      return;
-    }
 
     setIsSubmitting(true);
 
@@ -315,7 +309,7 @@ const Checkout = () => {
                     <Label className="text-base font-semibold">طريقة الدفع</Label>
                     <RadioGroup
                       value={paymentMethod}
-                      onValueChange={(value) => setPaymentMethod(value as "cod" | "stripe")}
+                      onValueChange={(value) => setPaymentMethod(value as "cod" | "baridimob")}
                       className="space-y-3"
                     >
                       <div className="flex items-center space-x-3 space-x-reverse p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
@@ -328,20 +322,39 @@ const Checkout = () => {
                           </div>
                         </Label>
                       </div>
-                      <div className="flex items-center space-x-3 space-x-reverse p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer relative opacity-60">
-                        <RadioGroupItem value="stripe" id="stripe" disabled />
-                        <Label htmlFor="stripe" className="flex items-center gap-3 cursor-pointer flex-1 mr-3">
+                      <div className="flex items-center space-x-3 space-x-reverse p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                        <RadioGroupItem value="baridimob" id="baridimob" />
+                        <Label htmlFor="baridimob" className="flex items-center gap-3 cursor-pointer flex-1 mr-3">
                           <CreditCard className="w-5 h-5 text-muted-foreground" />
                           <div>
-                            <p className="font-medium">بطاقة الائتمان</p>
-                            <p className="text-sm text-muted-foreground">دفع آمن عبر الإنترنت</p>
+                            <p className="font-medium">بريدي موب</p>
+                            <p className="text-sm text-muted-foreground">الدفع عبر تطبيق بريدي موب</p>
                           </div>
                         </Label>
-                        <span className="absolute top-2 left-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                          قريباً
-                        </span>
                       </div>
                     </RadioGroup>
+                    
+                    {paymentMethod === "baridimob" && (
+                      <div className="mt-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                        <p className="text-sm font-medium mb-2">قم بالتحويل إلى الحساب التالي:</p>
+                        <div className="flex items-center gap-2 bg-background p-3 rounded-lg">
+                          <code className="flex-1 text-sm font-mono" dir="ltr">{BARIDIMOB_ACCOUNT}</code>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(BARIDIMOB_ACCOUNT);
+                              toast.success("تم نسخ رقم الحساب");
+                            }}
+                            className="text-primary hover:text-primary/80 text-sm font-medium"
+                          >
+                            نسخ
+                          </button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          بعد التحويل، أرسل لنا إثبات الدفع وسنقوم بمعالجة طلبك
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <Button 
