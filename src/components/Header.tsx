@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Menu, X, ShoppingBag, Search, User } from "lucide-react";
+import { Menu, X, ShoppingBag, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/contexts/CartContext";
+import SearchBar from "@/components/SearchBar";
 import logo from "@/assets/logo.png";
 
 const Header = () => {
@@ -58,9 +59,9 @@ const Header = () => {
             <Link to={user ? "/my-orders" : "/auth"} className="p-2 nav-link hidden md:flex" title={user ? "طلباتي" : "تسجيل الدخول"}>
               <User className="w-5 h-5" />
             </Link>
-            <button className="p-2 nav-link hidden md:flex">
-              <Search className="w-5 h-5" />
-            </button>
+            <div className="hidden md:flex">
+              <SearchBar />
+            </div>
             
             <button 
               onClick={() => setIsCartOpen(true)}
@@ -95,14 +96,7 @@ const Header = () => {
               {user ? "طلباتي" : "تسجيل الدخول"}
             </Link>
             <div className="pt-4 border-t border-border">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <input 
-                  type="text" 
-                  placeholder="البحث عن منتجات..." 
-                  className="input-search w-full pl-12"
-                />
-              </div>
+              <SearchBar isMobile onResultClick={() => setIsMenuOpen(false)} />
             </div>
           </nav>
         </div>
