@@ -261,7 +261,6 @@ const ProductsAdmin = () => {
 
       <div className="lg:mr-64 min-h-screen">
         <AdminHeader 
-          email={user?.email} 
           title="إدارة المنتجات" 
           subtitle={`${products.length} منتج في المتجر`}
         />

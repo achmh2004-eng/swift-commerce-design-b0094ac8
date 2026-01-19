@@ -133,7 +133,6 @@ const AnalyticsAdmin = () => {
       
       <main className="lg:mr-64 min-h-screen">
         <AdminHeader 
-          email={user?.email} 
           title="التحليلات" 
           subtitle="إحصائيات وتحليلات المتجر"
         />

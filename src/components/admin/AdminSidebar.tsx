@@ -4,8 +4,6 @@ import {
   LayoutDashboard, 
   Package, 
   ShoppingCart, 
-  Users, 
-  Settings, 
   ChevronLeft,
   ChevronRight,
   TrendingUp,
@@ -27,8 +25,6 @@ const menuItems = [
   { icon: Package, label: "المنتجات", path: "/admin/products" },
   { icon: ShoppingCart, label: "الطلبات", path: "/admin/orders" },
   { icon: TrendingUp, label: "التحليلات", path: "/admin/analytics" },
-  { icon: Users, label: "العملاء", path: "/admin/customers" },
-  { icon: Settings, label: "الإعدادات", path: "/admin/settings" },
 ];
 
 const AdminSidebar = ({ onLogout }: AdminSidebarProps) => {
