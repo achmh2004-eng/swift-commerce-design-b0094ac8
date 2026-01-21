@@ -40,7 +40,7 @@ const Footer = () => {
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                <span dir="ltr">+213 555 00 00 00</span>
+                <a href="tel:0782675199" dir="ltr" className="hover:text-foreground transition-colors">0782675199</a>
               </li>
               <li className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
